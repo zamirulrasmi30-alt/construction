@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PackageSearch, Truck, HandCoins, PackageCheck, FileCheck, XCircle } from 'lucide-react';
 import Navbar from '../../components/shop/Navbar';
-import api from '../../lib/api';
+import { findMockOrder, USE_MOCK_DB } from '../../lib/mockData';
 import { inrFull, STATUS_META } from '../../lib/format';
 
 const STEP_ORDER = ['pending_payment', 'advance_paid', 'dispatched', 'delivered'];
@@ -19,8 +19,16 @@ export default function TrackOrder() {
     setBusy(true);
     setErr(null);
     try {
-      const { data } = await api.trackOrder(orderNo.trim(), phone.trim());
-      setOrder(data);
+      if (USE_MOCK_DB) {
+        // Sample lookup — no live database call (Vercel-safe). Matching
+        // normalises digits so "ORD-202610-0001" and last-10 phone digits work.
+        const mock = findMockOrder(orderNo.trim(), phone.trim());
+        if (!mock) throw new Error('No matching sample order — try ORD-202610-0001 / 9840012345.');
+        setOrder(mock);
+        return;
+      }
+      // Live path (disabled while USE_MOCK_DB): re-add api.trackOrder here
+      // together with the api.js import when a backend returns.
     } catch (ex) {
       setErr(ex.message);
       setOrder(null);

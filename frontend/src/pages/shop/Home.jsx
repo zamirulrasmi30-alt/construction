@@ -4,26 +4,25 @@ import Navbar from '../../components/shop/Navbar';
 import ProductCard from '../../components/shop/ProductCard';
 import ProductQuickView from '../../components/shop/ProductQuickView';
 import OrderModal from '../../components/shop/OrderModal';
-import api from '../../lib/api';
+import { MOCK_CATEGORIES, MOCK_PRODUCTS } from '../../lib/mockData';
 
 export default function Home() {
-  const [categories, setCategories] = useState([]);
-  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState(MOCK_CATEGORIES);
+  const [products, setProducts] = useState(MOCK_PRODUCTS);
   const [loading, setLoading] = useState(true);
   const [activeCat, setActiveCat] = useState('all');
   const [q, setQ] = useState('');
   const [orderProduct, setOrderProduct] = useState(null);
   const [quickViewProduct, setQuickViewProduct] = useState(null);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
     (async () => {
       try {
-        const [cats, prods] = await Promise.all([api.categories(), api.products({})]);
-        setCategories(cats.data);
-        setProducts(prods.data);
-      } catch (e) {
-        setError(e.message);
+        // Mock catalog served locally — no live database/API calls, so Vercel
+        // deployments never hit DB connection or column errors. Reconnect
+        // api.categories()/api.products() here when a backend returns.
+        setCategories(MOCK_CATEGORIES);
+        setProducts(MOCK_PRODUCTS);
       } finally {
         setLoading(false);
       }
@@ -102,9 +101,7 @@ export default function Home() {
           ))}
         </div>
 
-        {error ? (
-          <p className="rounded-2xl bg-rose-50 p-6 text-sm text-rose-600 dark:bg-rose-950/50 dark:text-rose-300">{error} — is the backend running (`npm run dev` in /backend)?</p>
-        ) : loading ? (
+        {loading ? (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="h-64 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
@@ -146,10 +143,8 @@ export default function Home() {
         <OrderModal
           product={orderProduct}
           onClose={() => setOrderProduct(null)}
-          onPlaced={(order) => {
-            setOrderProduct(null);
-            window.location.href = `/order-success?order=${order.order.order_number}&phone=${encodeURIComponent(order.order.customer_phone)}`;
-          }}
+          // OrderModal shows its own success confirmation; it just closes here.
+          onPlaced={() => setOrderProduct(null)}
         />
       )}
 

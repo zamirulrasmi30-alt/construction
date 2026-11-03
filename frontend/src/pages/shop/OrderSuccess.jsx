@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { CheckCircle2, FileText } from 'lucide-react';
 import Navbar from '../../components/shop/Navbar';
-import api from '../../lib/api';
+import { findMockOrder, USE_MOCK_DB } from '../../lib/mockData';
 import { inrFull } from '../../lib/format';
 import downloadInvoicePdf from '../../lib/invoice';
 
@@ -16,14 +16,22 @@ export default function OrderSuccess() {
 
   useEffect(() => {
     if (!orderNo || !phone) return;
-    api
-      .trackOrder(orderNo, phone)
-      .then(({ data }) => setOrder(data))
-      .catch((e) => setErr(e.message));
+    const load = async () => {
+      try {
+        if (USE_MOCK_DB) {
+          // Sample lookup — no live database call (Vercel-safe).
+          const mock = findMockOrder(orderNo, phone);
+          if (!mock) throw new Error('No matching sample order — try ORD-202610-0001 / 9840012345.');
+          setOrder(mock);
+          return;
+        }
+        setErr('Backend offline — order lookup unavailable.');
+      } catch (e) {
+        setErr(e.message);
+      }
+    };
+    load();
   }, [orderNo, phone]);
-
-  const invoiceUrl = `/api/invoices/order/${encodeURIComponent(orderNo || '')}?phone=${encodeURIComponent(phone || '')}`;
-  const receiptUrl = `${invoiceUrl}&doc=receipt`;
 
   return (
     <div className="min-h-screen">
@@ -60,10 +68,10 @@ export default function OrderSuccess() {
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200">
                 <FileText size={15} /> Download Invoice (PDF)
               </button>
-              <a href={receiptUrl} target="_blank" rel="noreferrer"
+              <button onClick={() => downloadInvoicePdf(order, 'RECEIPT')}
                 className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
                 Delivery Receipt (balance to collect)
-              </a>
+              </button>
             </div>
 
             <div className="mt-6 flex justify-between text-xs">

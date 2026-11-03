@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { LogOut, LayoutDashboard, ShoppingCart, Boxes, Receipt, FolderTree, HardHat, Sun, Moon } from 'lucide-react';
 import { admin } from '../../lib/api';
@@ -72,21 +72,16 @@ export default function Dashboard() {
 }
 
 function Header() {
-  const [ping, setPing] = useState('—');
-  useEffect(() => {
-    fetch('/api/health')
-      .then((r) => r.json())
-      .then((d) => setPing(d.db ? 'DB connected' : 'DB unavailable'))
-      .catch(() => setPing('API offline'));
-  }, []);
+  // Static badge — no /api/health ping, so the dashboard never hits a
+  // failing database request on Vercel (all data comes from mockData.js).
   return (
     <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
       <div>
         <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">Business Control Room</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400">Live inventory, orders and dispatch in one place.</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">Sample inventory, orders and dispatch in one place.</p>
       </div>
-      <span className={`rounded-full px-3 py-1 text-xs font-bold ${ping === 'DB connected' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300' : 'bg-rose-100 text-rose-600 dark:bg-rose-900 dark:text-rose-300'}`}>
-        {ping}
+      <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+        Sample data · backend offline
       </span>
     </div>
   );

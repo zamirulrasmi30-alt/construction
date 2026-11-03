@@ -459,6 +459,7 @@ export const MOCK_ANALYTICS = {
     revenue: 1024120,
     advance_collected: 485000,
     orders: 5,
+    avg_order_value: 204824,
     low_stock: 4,
     pending_orders: 2,
   },
@@ -503,4 +504,24 @@ export const MOCK_ANALYTICS = {
     { id: 'prd-tata-tmt-10', name: 'Tata Tiscon TMT Fe 550D 10mm', brand: 'Tata Steel', category: 'TMT Steel', current_stock: 0, minimum_alert_stock: 5, unit_type: 'Metric Tons' },
     { id: 'prd-red-brick-9', name: 'Country Red Bricks 9', brand: null, category: 'Bricks & Blocks', current_stock: 0, minimum_alert_stock: 8000, unit_type: 'Pieces' },
   ],
+};
+
+// -----------------------------------------------------------------------------
+// Master switch — bypass ALL live database/API calls and serve the sample
+// arrays above. Keeps Vercel deploys free of DB connection/column errors.
+// Set to false to reconnect api.js endpoints when a backend returns.
+// -----------------------------------------------------------------------------
+export const USE_MOCK_DB = true;
+
+// Locate a sample order by (partial) order number + phone digits.
+export const findMockOrder = (orderNo, phone) => {
+  const digits = (s) => String(s || '').replace(/\D/g, '');
+  const no = digits(orderNo);
+  const ph = digits(phone).slice(-10);
+  if (!no || !ph) return null;
+  return (
+    MOCK_ORDERS.find(
+      (o) => digits(o.order_number).endsWith(no) && digits(o.customer_phone).endsWith(ph)
+    ) || null
+  );
 };

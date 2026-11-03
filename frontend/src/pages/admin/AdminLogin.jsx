@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { HardHat, Lock, ArrowLeft } from 'lucide-react';
 import Button from '../../components/shared/Button';
 import { admin } from '../../lib/api';
+import { USE_MOCK_DB } from '../../lib/mockData';
 
 export default function AdminLogin() {
   const [username, setUsername] = useState('');
@@ -13,6 +14,13 @@ export default function AdminLogin() {
   const submit = async () => {
     setErr(null);
     try {
+      if (USE_MOCK_DB) {
+        // Sample data mode — grant demo access locally without a backend
+        // login call (so the dashboard is viewable on Vercel).
+        localStorage.setItem('bs_admin_token', 'mock-admin-token');
+        navigate('/admin', { replace: true });
+        return;
+      }
       await admin.login(username, password);
       navigate('/admin', { replace: true });
     } catch (e) {

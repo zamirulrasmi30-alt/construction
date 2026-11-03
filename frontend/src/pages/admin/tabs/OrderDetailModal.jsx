@@ -5,6 +5,8 @@ import Button from '../../../components/shared/Button';
 import Field, { inputCls } from '../../../components/shared/Field';
 import { admin } from '../../../lib/api';
 import { inrFull, fmtQty, dateOnly, STATUS_META } from '../../../lib/format';
+import downloadInvoicePdf from '../../../lib/invoice';
+import { MOCK_ORDERS, USE_MOCK_DB } from '../../../lib/mockData';
 import { QtyList, StatusPill } from './OrdersTab';
 
 export default function OrderDetailModal({ orderId, onClose, onChanged }) {
@@ -19,6 +21,17 @@ export default function OrderDetailModal({ orderId, onClose, onChanged }) {
 
   const load = async () => {
     try {
+      if (USE_MOCK_DB) {
+        // Mock lookup — no live database call (Vercel-safe).
+        const mock = MOCK_ORDERS.find((x) => x.id === orderId);
+        if (mock) {
+          setOrder(mock);
+          setErr(null);
+          return;
+        }
+        setErr('Order not found in the sample dataset.');
+        return;
+      }
       const { data } = await admin.order(orderId);
       setOrder(data);
       setErr(null);
@@ -35,6 +48,11 @@ export default function OrderDetailModal({ orderId, onClose, onChanged }) {
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [orderId]);
 
   const act = (fn, msg) => async () => {
+    if (USE_MOCK_DB) {
+      // Sample data — status transitions require the backend (no DB writes).
+      setNote({ ok: false, text: 'Sample data mode — this action requires the backend.' });
+      return;
+    }
     try {
       await fn();
       setNote({ ok: true, text: msg });
@@ -149,10 +167,10 @@ export default function OrderDetailModal({ orderId, onClose, onChanged }) {
 
           {(o.order_status === 'delivered' || o.order_status === 'dispatched') && (
             <div className="mt-3 flex flex-wrap gap-2">
-              <Button variant="secondary" onClick={() => admin.downloadInvoice(o.id, 'invoice')}>
+              <Button variant="secondary" onClick={() => downloadInvoicePdf(o, 'INVOICE')}>
                 <FileText size={15} /> Invoice PDF
               </Button>
-              <Button variant="secondary" onClick={() => admin.downloadInvoice(o.id, 'receipt')}>
+              <Button variant="secondary" onClick={() => downloadInvoicePdf(o, 'RECEIPT')}>
                 <FileText size={15} /> Collection Receipt
               </Button>
             </div>

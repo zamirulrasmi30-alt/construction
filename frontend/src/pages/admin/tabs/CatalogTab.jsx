@@ -5,6 +5,7 @@ import Modal from '../../../components/shared/Modal';
 import Button from '../../../components/shared/Button';
 import Field, { inputCls } from '../../../components/shared/Field';
 import { inr, fmtQty } from '../../../lib/format';
+import { MOCK_CATEGORIES, MOCK_PRODUCTS, USE_MOCK_DB } from '../../../lib/mockData';
 
 export default function CatalogTab() {
   const [cats, setCats] = useState(null);
@@ -17,6 +18,13 @@ export default function CatalogTab() {
   const load = async () => {
     setErr(null);
     try {
+      if (USE_MOCK_DB) {
+        // Mock catalog data — no live database call, so Vercel deployments
+        // never hit DB connection or column errors.
+        setCats(MOCK_CATEGORIES);
+        setProds(MOCK_PRODUCTS);
+        return;
+      }
       const [c, p] = await Promise.all([admin.categories(), admin.products({ status: 'all' })]);
       setCats(c.data);
       setProds(p.data);
@@ -54,7 +62,10 @@ export default function CatalogTab() {
                   </div>
                   <div className="flex gap-1">
                     <button onClick={() => setEditingCat(c)} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"><Pencil size={14} /></button>
-                    <button onClick={async () => { if (confirm(`Delete category "${c.name}"?`)) { await admin.deleteCategory(c.id); load(); } }} className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950 dark:hover:text-rose-300"><Trash2 size={14} /></button>
+                    <button onClick={async () => {
+                      if (USE_MOCK_DB) { window.alert('Sample data mode — catalogue changes require the backend.'); return; }
+                      if (confirm(`Delete category "${c.name}"?`)) { await admin.deleteCategory(c.id); load(); }
+                    }} className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950 dark:hover:text-rose-300"><Trash2 size={14} /></button>
                   </div>
                 </div>
                 <div className="mt-2 flex flex-wrap gap-1">
@@ -111,7 +122,10 @@ export default function CatalogTab() {
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-1">
                         <button onClick={() => setEditingProd(p)} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"><Pencil size={14} /></button>
-                        <button onClick={async () => { if (confirm(`Delete "${p.name}"?`)) { await admin.deleteProduct(p.id); load(); } }} className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950 dark:hover:text-rose-300"><Trash2 size={14} /></button>
+                        <button onClick={async () => {
+                          if (USE_MOCK_DB) { window.alert('Sample data mode — catalogue changes require the backend.'); return; }
+                          if (confirm(`Delete "${p.name}"?`)) { await admin.deleteProduct(p.id); load(); }
+                        }} className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950 dark:hover:text-rose-300"><Trash2 size={14} /></button>
                       </div>
                     </td>
                   </tr>
@@ -156,6 +170,11 @@ function CategoryModal({ category, onClose, onDone }) {
   const [msg, setMsg] = useState(null);
 
   const submit = async () => {
+    if (USE_MOCK_DB) {
+      setMsg({ ok: true, text: 'Sample data mode — change not persisted (backend offline).' });
+      setTimeout(onDone, 800);
+      return;
+    }
     try {
       const unitList = units.split(',').map((u) => u.trim()).filter(Boolean);
       if (isEdit) await admin.updateCategory(category.id, { name, description, unit_types: unitList });
@@ -211,6 +230,10 @@ function ProductModal({ product, categories, onClose, onDone }) {
     setUploading(true);
     setUploadMsg(null);
     try {
+      if (USE_MOCK_DB) {
+        setUploadMsg({ ok: false, text: 'Image upload needs the backend (sample mode).' });
+        return;
+      }
       const { url } = await admin.uploadImage(file);
       setF((prev) => ({ ...prev, image_url: url }));
       setUploadMsg({ ok: true, text: 'Image uploaded ✓' });
@@ -225,6 +248,11 @@ function ProductModal({ product, categories, onClose, onDone }) {
   const unitOptions = categories.find((c) => c.id === f.category_id)?.unit_types || [];
 
   const submit = async () => {
+    if (USE_MOCK_DB) {
+      setMsg({ ok: true, text: 'Sample data mode — change not persisted (backend offline).' });
+      setTimeout(onDone, 800);
+      return;
+    }
     try {
       const payload = {
         category_id: f.category_id, name: f.name, brand: f.brand || null,

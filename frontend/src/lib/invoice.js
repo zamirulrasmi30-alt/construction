@@ -14,7 +14,7 @@ const date = (iso) => {
   return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 };
 
-export default function downloadInvoicePdf(order) {
+export default function downloadInvoicePdf(order, docTitle = 'INVOICE') {
   const doc = new jsPDF({ unit: 'pt', format: 'a4' });
   const pageW = doc.internal.pageSize.getWidth();
   const M = 40;
@@ -33,7 +33,7 @@ export default function downloadInvoicePdf(order) {
   doc.text('Construction Materials · E-Commerce & ERP', M, 58);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(16);
-  doc.text('INVOICE', pageW - M, 42, { align: 'right' });
+  doc.text(String(docTitle || 'INVOICE'), pageW - M, 42, { align: 'right' });
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
   doc.setTextColor(255, 255, 255);
@@ -130,5 +130,8 @@ export default function downloadInvoicePdf(order) {
   doc.text(`Advance paid: ${money(order.advance_paid)} · Balance on delivery: ${money(order.balance_due)}`, M, sy + 14);
   doc.text('Thank you for your business with BuildSupply ERP.', M, sy + 42);
 
-  doc.save(`Invoice_${order.order_number || 'order'}.pdf`);
+  const baseName = docTitle
+    ? docTitle.toLowerCase().replace(/(^|\s)\S/g, (c) => c.toUpperCase()).replace(/\s+/g, '')
+    : 'Invoice';
+  doc.save(`${baseName}_${order.order_number || 'order'}.pdf`);
 }

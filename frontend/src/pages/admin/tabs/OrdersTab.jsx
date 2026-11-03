@@ -3,6 +3,7 @@ import { RefreshCw, Search } from 'lucide-react';
 import { admin } from '../../../lib/api';
 import { inrFull, fmtQty, dateOnly, STATUS_META } from '../../../lib/format';
 import OrderDetailModal from './OrderDetailModal';
+import { MOCK_ORDERS, USE_MOCK_DB } from '../../../lib/mockData';
 
 export default function OrdersTab() {
   const [orders, setOrders] = useState(null);
@@ -14,6 +15,20 @@ export default function OrdersTab() {
   const load = async () => {
     setErr(null);
     try {
+      if (USE_MOCK_DB) {
+        // Served from the sample dataset — no live database call, so Vercel
+        // deployments cannot hit DB connection/column errors.
+        let rows = MOCK_ORDERS;
+        if (status !== 'all') rows = rows.filter((o) => o.order_status === status);
+        if (q.trim()) {
+          const t = q.trim().toLowerCase();
+          rows = rows.filter((o) =>
+            `${o.order_number} ${o.customer_name || ''} ${o.customer_phone || ''}`.toLowerCase().includes(t)
+          );
+        }
+        setOrders(rows);
+        return;
+      }
       const params = {};
       if (status !== 'all') params.status = status;
       if (q.trim()) params.q = q.trim();

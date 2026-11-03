@@ -5,6 +5,7 @@ import Modal from '../../../components/shared/Modal';
 import Button from '../../../components/shared/Button';
 import Field, { inputCls } from '../../../components/shared/Field';
 import { inr, fmtQty } from '../../../lib/format';
+import { MOCK_INVENTORY, USE_MOCK_DB } from '../../../lib/mockData';
 
 export default function InventoryTab() {
   const [rows, setRows] = useState(null);
@@ -15,6 +16,11 @@ export default function InventoryTab() {
   const load = async () => {
     setErr(null);
     try {
+      if (USE_MOCK_DB) {
+        // Sample dataset — no live database call (Vercel-safe).
+        setRows(MOCK_INVENTORY);
+        return;
+      }
       const { data } = await admin.inventory();
       setRows(data);
     } catch (e) {
@@ -135,6 +141,12 @@ function StockInModal({ product, allProducts, onClose, onDone }) {
   const [msg, setMsg] = useState(null);
 
   const submit = async () => {
+    if (USE_MOCK_DB) {
+      // Sample data — no live database write on Vercel.
+      setMsg({ ok: true, text: 'Sample data mode — stock log recorded locally.' });
+      setTimeout(onDone, 800);
+      return;
+    }
     try {
       await admin.receiveStock({ product_id: productId, quantity: Number(qty), supplier, notes });
       setMsg({ ok: true, text: 'Stock received & ledger updated ✓' });
@@ -165,6 +177,12 @@ function AdjustModal({ product, allProducts, onClose, onDone }) {
   const [msg, setMsg] = useState(null);
 
   const submit = async () => {
+    if (USE_MOCK_DB) {
+      // Sample data — no live database write on Vercel.
+      setMsg({ ok: true, text: 'Sample data mode — adjustment acknowledged locally.' });
+      setTimeout(onDone, 800);
+      return;
+    }
     try {
       await admin.adjustStock({ product_id: productId, delta: Number(delta), notes });
       setMsg({ ok: true, text: 'Adjustment recorded ✓' });

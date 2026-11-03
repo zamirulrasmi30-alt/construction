@@ -6,6 +6,7 @@ import {
 import { TrendingUp, Wallet, ClipboardList, AlertTriangle, ShoppingCart, Truck, CheckCircle2, XCircle, Clock } from 'lucide-react';
 import { admin } from '../../../lib/api';
 import { inr, fmtQty } from '../../../lib/format';
+import { MOCK_ANALYTICS, USE_MOCK_DB } from '../../../lib/mockData';
 
 const PIE_COLORS = ['#16a34a', '#f59e0b', '#0ea5e9', '#8b5cf6', '#f43f5e', '#64748b'];
 
@@ -14,15 +15,20 @@ export default function AnalyticsTab() {
   const [err, setErr] = useState(null);
 
   useEffect(() => {
+    // Sample analytics — no live database call (Vercel-safe). Reconnect
+    // admin.analytics() here when a backend returns.
+    setData(MOCK_ANALYTICS);
+    /* Live fetch (disabled while USE_MOCK_DB)
     admin.analytics({ days: 14 })
-      .then(({ data }) => setData(data))
+      .then(({ data: d }) => setData(d))
       .catch((e) => setErr(e.message));
+    */
   }, []);
 
   if (err) return <Alert msg={err} />;
   if (!data) return <div className="animate-pulse rounded-3xl bg-white p-10 dark:bg-slate-800">Loading intelligence…</div>;
 
-  const k = data.kpis;
+  const k = data.kpis || {};
 
   const cards = [
     { label: 'Total Revenue', value: inr(k.revenue), icon: TrendingUp, tint: 'bg-emerald-500' },

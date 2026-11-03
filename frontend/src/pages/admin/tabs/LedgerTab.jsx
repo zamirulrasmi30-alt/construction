@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { RefreshCw, ArrowDownCircle, ArrowUpCircle, Wrench } from 'lucide-react';
 import { admin } from '../../../lib/api';
 import { fmtQty, dateOnly } from '../../../lib/format';
+import { MOCK_LEDGER, USE_MOCK_DB } from '../../../lib/mockData';
 
 export default function LedgerTab() {
   const [rows, setRows] = useState(null);
@@ -11,6 +12,11 @@ export default function LedgerTab() {
   const load = async () => {
     setErr(null);
     try {
+      if (USE_MOCK_DB) {
+        // Sample dataset — no live database call (Vercel-safe).
+        setRows(type ? MOCK_LEDGER.filter((t) => t.type === type) : MOCK_LEDGER);
+        return;
+      }
       const { data } = await admin.ledger(type ? { type } : {});
       setRows(data);
     } catch (e) {
